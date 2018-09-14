@@ -1,0 +1,24 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t friedmanss/react-test -f ./client/Dockerfile.dev ./client
+
+scripts:
+  - docker run friedmanss/react-test yarn test -- --coverage
+
+after_success:
+  - docker build -t friedmanss/multi-client ./client
+  - docker build -t friedmanss/multi-nginx ./nginx
+  - docker build -t friedmanss/multi-server ./server
+  - docker build -t friedmanss/multi-working ./worker
+
+  # login to dockerhub
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # push build result to dockerhub
+  - docker push friedmanss/multi-client
+  - docker push friedmanss/multi-nginx
+  - docker push friedmanss/multi-server
+  - docker push friedmanss/multi-working
